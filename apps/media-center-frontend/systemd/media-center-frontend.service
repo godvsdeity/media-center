@@ -1,0 +1,18 @@
+# /etc/systemd/system/media-center-frontend.service
+[Unit]
+Description=media-center-frontend
+After=network-online.target
+
+[Service]
+ExecStart=/usr/bin/yarn serve:build -l 80
+Restart=always
+User=root
+Group=root
+Environment=NODE_ENV=production
+WorkingDirectory=/home/ubuntu/media-center/packages/media-center-frontend 
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=media_center_frontend
+
+[Install]
+WantedBy=multi-user.target

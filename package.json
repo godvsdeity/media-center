@@ -1,0 +1,9 @@
+{
+  "private": true,
+  "name": "@godvsdeity/media-center",
+  "version": "0.1.0",
+  "license": "MIT",
+  "workspaces": [
+    "apps/*"
+  ]
+}

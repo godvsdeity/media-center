@@ -1,0 +1,18 @@
+# /etc/systemd/system/media-center-backend.service
+[Unit]
+Description=media-center-backend
+After=network-online.target
+
+[Service]
+ExecStart=/usr/bin/yarn start
+Restart=always
+User=pi
+Group=pi
+Environment=NODE_ENV=production
+WorkingDirectory=/home/ubuntu/media-center/packages/media-center-backend
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=media_center_backend
+
+[Install]
+WantedBy=multi-user.target
