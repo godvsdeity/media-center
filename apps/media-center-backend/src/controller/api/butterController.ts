@@ -6,16 +6,18 @@ import {
   ButterCollectionSortOrder,
 } from "../../service";
 
+type FunctionType = (...args: any[]) => any;
+
 @Controller()
 export class ButterController {
-  protected collectionCallback: Function;
-  protected itemCallback: Function;
+  protected collectionCallback: FunctionType;
+  protected itemCallback: FunctionType;
 
   protected maxAgeCollection = 24 * 3600 * 1000; // 1 day
   protected maxAgeItem = 24 * 3600 * 1000; // 1 day
   protected defaultSort = "trending";
 
-  constructor(collectionCallback: Function, itemCallback: Function) {
+  constructor(collectionCallback: FunctionType, itemCallback: FunctionType) {
     this.collectionCallback = memoize(collectionCallback, {
       maxAge: this.maxAgeCollection,
       promise: true,
