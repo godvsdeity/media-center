@@ -85,9 +85,6 @@ function NavBar() {
           <LiNavLink to="/shows" activeClassName="active" className="nav-link">
             Shows
           </LiNavLink>
-          <LiNavLink to="/animes" activeClassName="active" className="nav-link">
-            Animes
-          </LiNavLink>
         </ul>
         <form className="form-inline my-2 my-lg-0 mr-auto text-info">
           <label htmlFor="sort" className="mr-2" hidden>

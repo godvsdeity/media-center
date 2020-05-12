@@ -2,13 +2,12 @@ import React from "react";
 import { Switch, Route, Redirect } from "react-router-dom";
 
 import "./App.css";
-import { NavBar, Movies, Movie, Shows, Show, Animes } from "./component";
+import { NavBar, Movies, Movie, Shows, Show } from "./component";
 import {
   GlobalContext,
   initialGlobalState,
   globalStateReducer,
 } from "./context/GlobalContext";
-import { getAnimePosterUrl } from "./helper";
 import playerIo from "./service/playerIo";
 
 function App() {
@@ -51,13 +50,6 @@ function App() {
             </Route>
             <Route path="/shows">
               <Shows />
-            </Route>
-
-            <Route path="/animes/:id">
-              <Show apiResource="animes" getPosterUrl={getAnimePosterUrl} />
-            </Route>
-            <Route path="/animes">
-              <Animes />
             </Route>
 
             <Route path="/">
