@@ -9,7 +9,7 @@ Restart=always
 User=pi
 Group=pi
 Environment=NODE_ENV=production
-WorkingDirectory=/home/ubuntu/media-center/packages/media-center-backend
+WorkingDirectory=/home/ubuntu/media-center/apps/media-center-backend
 StandardOutput=syslog
 StandardError=syslog
 SyslogIdentifier=media_center_backend
