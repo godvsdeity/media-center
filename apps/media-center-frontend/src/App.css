@@ -9,3 +9,19 @@
   width: 100%;
   height: 196px;
 }
+
+.movie-article .show-data {
+  min-height: 495px;
+  height: calc(100vh - 294px);
+  overflow: hidden;
+}
+
+.movie-article .show-data .col {
+  height: inherit;
+  overflow-y: hidden;
+}
+
+.movie-article .show-data .col:focus,
+.movie-article .show-data .col:hover {
+  overflow-y: scroll;
+}

@@ -1,4 +1,5 @@
 import React from "react";
+import ReactDom from "react-dom";
 import { useParams } from "react-router-dom";
 
 import placeholder from "./poster-placeholder.png";
@@ -12,10 +13,12 @@ interface ShowProps {
 }
 
 function Show({ apiResource, getPosterUrl }: ShowProps) {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
+
   const [item, setItem] = React.useState<any>(null);
   const [activeSeason, setActiveSeason] = React.useState<number>(1);
   const [activeEpisode, setActiveEpisode] = React.useState<number>(1);
+  const [seasonsMap, setSeasonsMap] = React.useState(new Map());
 
   const onSeasonBtnClick = React.useCallback((season: number) => {
     setActiveSeason(season);
@@ -30,49 +33,64 @@ function Show({ apiResource, getPosterUrl }: ShowProps) {
     (async () => {
       const response = await fetch(`${API_HOST}${apiResource}/${id}`);
       const item = await response.json();
-      setItem(item);
+      const seasonsMap = new Map();
+      item.episodes.forEach((episode) => {
+        const seasonNo = parseInt(episode.season);
+        const episodes = seasonsMap.get(seasonNo) || [];
+        episodes.push(episode);
+        seasonsMap.set(seasonNo, episodes);
+      });
+      seasonsMap.forEach((episodes) =>
+        episodes.sort((eA, eB) => eA.episode - eB.episode)
+      );
+
+      ReactDom.unstable_batchedUpdates(() => {
+        setItem(item);
+        setSeasonsMap(seasonsMap);
+      });
     })();
   }, [id, apiResource]);
 
+  console.log();
+
   const seasons: JSX.Element[] = [];
   const episodes: JSX.Element[] = [];
-  if (item) {
-    for (let index = 1; index <= item.num_seasons; index++) {
-      const classes = `list-group-item list-group-item-action bg-dark text-light btn-sm${
-        index === activeSeason ? " active" : ""
-      }`;
-      seasons.push(
-        <button
-          key={index}
-          type="button"
-          className={classes}
-          data-season={index}
-          onClick={() => onSeasonBtnClick(index)}
-        >
-          Season {index}
-        </button>
-      );
-    }
-
-    item.episodes
-      .filter((episode) => parseInt(episode.season) === activeSeason)
-      .sort((eA, eB) => eA.episode - eB.episode)
-      .forEach((episode) => {
+  if (seasonsMap.size) {
+    [...seasonsMap.keys()]
+      .sort((sA, sB) => sA - sB)
+      .forEach((seasonNo) => {
         const classes = `list-group-item list-group-item-action bg-dark text-light btn-sm${
-          parseInt(episode.episode) === activeEpisode ? " active" : ""
+          seasonNo === activeSeason ? " active" : ""
         }`;
-        episodes.push(
+        seasons.push(
           <button
-            key={episode.episode}
+            key={`season-${seasonNo}`}
             type="button"
             className={classes}
-            data-episode={episode.episode}
-            onClick={() => onEpisodeBtnClick(parseInt(episode.episode))}
+            data-season={seasonNo}
+            onClick={() => onSeasonBtnClick(seasonNo)}
           >
-            {episode.episode}. {episode.title}
+            Season {seasonNo}
           </button>
         );
       });
+
+    seasonsMap.get(activeSeason).forEach((episode) => {
+      const classes = `list-group-item list-group-item-action bg-dark text-light btn-sm${
+        parseInt(episode.episode) === activeEpisode ? " active" : ""
+      }`;
+      episodes.push(
+        <button
+          key={episode.episode}
+          type="button"
+          className={classes}
+          data-episode={episode.episode}
+          onClick={() => onEpisodeBtnClick(parseInt(episode.episode))}
+        >
+          {episode.episode}. {episode.title}
+        </button>
+      );
+    });
   }
   const activeEpisodeData = item
     ? item.episodes.find(
@@ -107,19 +125,11 @@ function Show({ apiResource, getPosterUrl }: ShowProps) {
         </section>
       </section>
 
-      <section className="row mt-3">
-        <section
-          className="col col-auto"
-          title="show seasons"
-          style={{ height: "500px", overflow: "scroll" }}
-        >
+      <section className="row mt-3 show-data">
+        <section className="col col-auto col-seasons" title="show seasons">
           <div className="list-group">{seasons}</div>
         </section>
-        <section
-          className="col col-auto"
-          title="show episodes"
-          style={{ height: "500px", overflow: "scroll" }}
-        >
+        <section className="col col-auto col-episodes" title="show episodes">
           <div className="list-group">{episodes}</div>
         </section>
         <section

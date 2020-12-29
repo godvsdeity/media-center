@@ -104,7 +104,7 @@ function onStop(activePlayers: ActivePlayers) {
 
     const dlnaPlayer = findDlnaPlayer(data.player.ref);
     if (dlnaPlayer && dlnaPlayer.client) {
-      await new Promise((resolve, reject) =>
+      await new Promise<void>((resolve, reject) =>
         dlnaPlayer.client.stop((err) => {
           if (err) return reject();
           resolve();
@@ -154,6 +154,7 @@ function onPlay(socket: socketio.Socket) {
 
     player.play(data.streamData.streamUrl, playerOptions, (error, status) => {
       if (error) {
+        console.log(error);
         // TODO emit error
         return;
       }

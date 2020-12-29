@@ -3,7 +3,7 @@ import dlnacasts2 from "dlnacasts2";
 export const dlnaList = dlnacasts2();
 
 export function findDlnaPlayer(playerRef): any {
-  return dlnaList.players.find((player) => player.host === playerRef);
+  return dlnaList.players.find((player) => player.name === playerRef);
 }
 
 dlnaList.players.forEach((dlnaPlayer: Record<string, any>) =>

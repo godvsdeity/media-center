@@ -3,8 +3,9 @@ import Octicon, { DeviceCameraVideo, Play } from "@primer/octicons-react";
 
 import TrailerModal from "./TrailerModal";
 import PlayerModal from "./PlayerModal";
-import { GlobalContext } from "../../context";
 import { AvailablePlayers, AvailablePlayer } from "../../interface";
+import { useRecoilValue } from "recoil";
+import { dlnaPlayersState } from "../../atom";
 
 interface PlayerNavBarProps {
   itemId: string;
@@ -27,7 +28,7 @@ function PlayerNavBar({
   trailer,
   torrents,
 }: PlayerNavBarProps) {
-  const globalContext = React.useContext(GlobalContext);
+  const dlnaPlayers = useRecoilValue(dlnaPlayersState);
   const [showTrailer, setShowTrailer] = React.useState(false);
   const [showPlayer, setShowPlayer] = React.useState(false);
 
@@ -46,10 +47,10 @@ function PlayerNavBar({
   const players: AvailablePlayers = [
     { type: "browser", ref: "browser", name: "Browser" },
   ];
-  globalContext.state.dlnaPlayers.forEach((player) =>
+  dlnaPlayers.forEach((player) =>
     players.push({
       type: "dlna",
-      ref: player.host,
+      ref: player.name,
       name: player.name,
     })
   );
