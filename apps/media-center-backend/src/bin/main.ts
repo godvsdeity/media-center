@@ -10,8 +10,7 @@ import {
   playerOnConnection,
   broadcastTorrentStats,
 } from "../service";
-import { Torrents, DownloadTorrentFile, Subtitles } from "../controller/stream";
-import { Movies, Animes, Shows } from "../controller/api";
+import { Torrents, Subtitles, Movies, Animes, Shows } from "../controller";
 
 function bootstrapSocketio(server: http.Server): void {
   const io = socketio(server);
@@ -22,14 +21,7 @@ function bootstrapSocketio(server: http.Server): void {
 function bootstrapKoaApp(app: Koa): void {
   const router = new Router();
 
-  registerControllers(router, [
-    Torrents,
-    DownloadTorrentFile,
-    Subtitles,
-    Movies,
-    Animes,
-    Shows,
-  ]);
+  registerControllers(router, [Torrents, Subtitles, Movies, Animes, Shows]);
 
   app
     .use(

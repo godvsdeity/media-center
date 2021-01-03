@@ -3,47 +3,36 @@ import Octicon, { ArrowDown, ArrowUp } from "@primer/octicons-react";
 
 import { toReadable } from "../../helper";
 import torrentIo from "../../service/torrentIo";
+import { StatsDataDTO } from "../../dto";
 
 interface TorrentStatsProps {
-  playerId: string | null;
+  infoHash: string | null;
 }
 
-interface StatsData {
-  downloadSpeed: number;
-  downloaded: number;
-  uploadSpeed: number;
-  uploaded: number;
-  progress: number;
-  size: number;
-}
+function TorrentStats({ infoHash }: TorrentStatsProps) {
+  const [stats, setStats] = React.useState<StatsDataDTO | null>(null);
 
-function TorrentStats({ playerId }: TorrentStatsProps) {
-  const [stats, setStats] = React.useState<StatsData | null>(null);
-
-  const onStats = React.useCallback(
-    (data: any) => {
-      setStats({
-        downloadSpeed: data.downloadSpeed,
-        downloaded: data.downloaded,
-        uploadSpeed: data.uploadSpeed,
-        uploaded: data.uploaded,
-        progress: data.progress,
-        size: data.size,
-      });
-    },
-    []
-  );
+  const onStats = React.useCallback((data: any) => {
+    setStats({
+      downloadSpeed: data.downloadSpeed,
+      downloaded: data.downloaded,
+      uploadSpeed: data.uploadSpeed,
+      uploaded: data.uploaded,
+      progress: data.progress,
+      size: data.size,
+    });
+  }, []);
 
   React.useEffect(() => {
-    if (!playerId) {
+    if (!infoHash) {
       return;
     }
 
-    torrentIo.on(`stats-${playerId}`, onStats);
+    torrentIo.on(`stats-${infoHash}`, onStats);
     return () => {
-      torrentIo.off(`stats-${playerId}`, onStats);
+      torrentIo.off(`stats-${infoHash}`, onStats);
     };
-  }, [onStats, playerId]);
+  }, [onStats, infoHash]);
 
   return (
     <>

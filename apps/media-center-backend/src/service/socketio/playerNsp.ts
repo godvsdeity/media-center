@@ -4,7 +4,6 @@ import WebTorrent from "webtorrent";
 import mime from "mime";
 
 import { torrentContainer, dlnaList, findDlnaPlayer } from "../../singleton";
-import { generateInfoHashId } from "../../helper";
 
 type ActivePlayers = Map<string, boolean>;
 
@@ -14,7 +13,10 @@ interface PlayEvent {
   streamData: Record<string, string>;
 }
 
-function getFile(torrent: WebTorrent.Torrent, fileId?: number): any[] {
+function getFile(
+  torrent: WebTorrent.Torrent,
+  fileId?: number
+): [number | null, WebTorrent.TorrentFile | null] {
   if (fileId !== undefined) {
     return [fileId, torrent.files[fileId]];
   }
@@ -36,18 +38,17 @@ function sendVideoData(
   playerId: string,
   torrent: WebTorrent.Torrent
 ): void {
-  const key = generateInfoHashId(torrent.infoHash);
-  const response = getFile(torrent);
-  if (response[0] === null) {
+  const [fileId, file] = getFile(torrent);
+  if (fileId === null || file === null) {
     // TODO: emit error
     return;
   }
-  const fileId = response[0] as number;
-  const file = response[1] as WebTorrent.TorrentFile;
+
   socket.emit(`loaded-${playerId}`, {
     playerId,
     infoHash: torrent.infoHash,
-    streamUri: `stream/${key}/${fileId}`,
+    fileId: fileId,
+    streamUri: `torrents/${torrent.infoHash}/${fileId}/stream`,
     fileName: file.name,
     fileType: mime.getType(file.name) || "application/octet-stream",
   });
@@ -55,26 +56,35 @@ function sendVideoData(
 
 function onLoad(socket: socketio.Socket, activePlayers: ActivePlayers) {
   return (data: Record<string, any>): void => {
-    const { playerId, torrentUrl } = data;
+    const { playerId, torrentUrl, infoHash } = data;
 
     try {
-      const magnetUri = ParseTorrent(torrentUrl);
-      if (!magnetUri.infoHash) {
-        // TODO: emit error
-        return;
-      }
-      activePlayers.set(playerId, true);
-
-      let torrent = torrentContainer.getTorrent(magnetUri.infoHash);
-      if (!torrent || !torrent.files.length) {
-        torrent = torrentContainer.addTorrent(magnetUri);
-        torrent.once("noPeers", (announceType) => {
-          // TODO: emit error :?
-        });
-        torrent.once("error", (error) => {
+      let torrent: WebTorrent.Torrent | void;
+      if (infoHash) {
+        torrent = torrentContainer.getTorrent(infoHash);
+        if (!torrent) {
           // TODO: emit error
-          console.error(error);
-        });
+          return;
+        }
+      } else {
+        const magnetUri = ParseTorrent(torrentUrl);
+        if (!magnetUri.infoHash) {
+          // TODO: emit error
+          return;
+        }
+        activePlayers.set(playerId, true);
+
+        torrent = torrentContainer.getTorrent(magnetUri.infoHash);
+        if (!torrent) {
+          torrent = torrentContainer.addTorrent(magnetUri);
+          torrent.once("noPeers", (announceType) => {
+            // TODO: emit error :?
+          });
+          torrent.once("error", (error) => {
+            // TODO: emit error
+            console.error(error);
+          });
+        }
       }
 
       if (!torrent.ready) {

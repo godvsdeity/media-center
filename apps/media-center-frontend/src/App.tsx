@@ -5,20 +5,20 @@ import { useSetRecoilState } from "recoil";
 import "./App.css";
 import { dlnaPlayersState } from "./atom";
 import { NavBar, Movies, Movie, Shows, Show } from "./component";
+import PlayerModal from "./component/main/PlayerModal";
+import Torrents from "./component/main/Torrents";
 import playerIo from "./service/playerIo";
 
 function App() {
   const setDlnaPlayers = useSetRecoilState(dlnaPlayersState);
   const onDlnaPlayers = React.useCallback(
     (dlnaPlayers) => {
-      console.log("dlna-players", dlnaPlayers);
       setDlnaPlayers(dlnaPlayers);
     },
     [setDlnaPlayers]
   );
   const onNewDlnaPlayer = React.useCallback(
     (dlnaPlayer) => {
-      console.log("new-dlna-player", dlnaPlayer);
       setDlnaPlayers((dlnaPlayers) => {
         if (
           dlnaPlayers.find(
@@ -63,11 +63,17 @@ function App() {
             <Shows />
           </Route>
 
+          <Route path="/torrents">
+            <Torrents />
+          </Route>
+
           <Route path="/">
             <Redirect to="/movies" />
           </Route>
         </Switch>
       </main>
+
+      <PlayerModal />
     </div>
   );
 }

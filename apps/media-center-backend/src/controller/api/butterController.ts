@@ -8,7 +8,6 @@ import {
 
 type FunctionType = (...args: any[]) => any;
 
-@Controller()
 export class ButterController {
   protected collectionCallback: FunctionType;
   protected itemCallback: FunctionType;

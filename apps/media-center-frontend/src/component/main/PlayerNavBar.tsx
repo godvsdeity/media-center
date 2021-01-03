@@ -1,11 +1,14 @@
 import React from "react";
 import Octicon, { DeviceCameraVideo, Play } from "@primer/octicons-react";
+import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 
 import TrailerModal from "./TrailerModal";
-import PlayerModal from "./PlayerModal";
-import { AvailablePlayers, AvailablePlayer } from "../../interface";
-import { useRecoilValue } from "recoil";
-import { dlnaPlayersState } from "../../atom";
+import {
+  availablePlayersQuery,
+  playerModalState,
+  playerTorrentDataState,
+  selectedPlayerRefState,
+} from "../../atom";
 
 interface PlayerNavBarProps {
   itemId: string;
@@ -17,8 +20,6 @@ interface PlayerNavBarProps {
   torrents: Record<string, any>;
 }
 
-const cachedAvailablePlayer: Map<string, any> = new Map();
-
 function PlayerNavBar({
   itemId,
   imdbId,
@@ -28,9 +29,14 @@ function PlayerNavBar({
   trailer,
   torrents,
 }: PlayerNavBarProps) {
-  const dlnaPlayers = useRecoilValue(dlnaPlayersState);
+  const availablePlayers = useRecoilValue(availablePlayersQuery);
+  const setShowPlayer = useSetRecoilState(playerModalState);
+  const setPlayerTorrentData = useSetRecoilState(playerTorrentDataState);
+  const [selectedPlayerRef, setSelectedPlayerRef] = useRecoilState(
+    selectedPlayerRefState
+  );
+
   const [showTrailer, setShowTrailer] = React.useState(false);
-  const [showPlayer, setShowPlayer] = React.useState(false);
 
   const audioLanguages = Object.keys(torrents);
   const defaultAudioLang = Object.keys(torrents)[0];
@@ -43,31 +49,23 @@ function PlayerNavBar({
     ? Object.keys(torrents[audioLanguage]).filter((res) => res !== "0")
     : [];
 
-  const [playerReference, setPlayerReference] = React.useState("browser");
-  const players: AvailablePlayers = [
-    { type: "browser", ref: "browser", name: "Browser" },
-  ];
-  dlnaPlayers.forEach((player) =>
-    players.push({
-      type: "dlna",
-      ref: player.name,
-      name: player.name,
-    })
-  );
-  const availablePlayer: AvailablePlayer =
-    cachedAvailablePlayer.get(playerReference) ||
-    players.find((player) => player.ref === playerReference) ||
-    players[0];
-  cachedAvailablePlayer.set(playerReference, availablePlayer);
-
   const toggleShowTrailer = React.useCallback(
     () => setShowTrailer((showTrailer) => !showTrailer),
     []
   );
-  const toggleShowPlayer = React.useCallback(
-    () => setShowPlayer((showPlayer) => !showPlayer),
-    []
-  );
+  const showPlayer = () => {
+    setPlayerTorrentData({
+      itemId,
+      imdbId,
+      season,
+      episode,
+      torrentUrl:
+        audioLanguage && resolution
+          ? torrents[audioLanguage][resolution].url
+          : undefined,
+    });
+    setShowPlayer(true);
+  };
   const onAudioLanguageChange = React.useCallback(
     (event: React.ChangeEvent<HTMLSelectElement>) => {
       setAudioLanguage(event.currentTarget.value);
@@ -82,9 +80,9 @@ function PlayerNavBar({
   );
   const onPlayerChange = React.useCallback(
     (event: React.ChangeEvent<HTMLSelectElement>) => {
-      setPlayerReference(event.currentTarget.value);
+      setSelectedPlayerRef(event.currentTarget.value);
     },
-    []
+    [setSelectedPlayerRef]
   );
 
   return (
@@ -159,16 +157,16 @@ function PlayerNavBar({
               </>
             )}
 
-            {players.length > 1 && (
+            {availablePlayers.length > 1 && (
               <select
                 id="players"
                 className="custom-select my-1"
                 onChange={onPlayerChange}
-                defaultValue={playerReference}
+                defaultValue={selectedPlayerRef}
                 title="Players"
                 style={{ width: 100 }}
               >
-                {players.map((player) => (
+                {availablePlayers.map((player) => (
                   <option key={player.ref} value={player.ref}>
                     {player.name}
                   </option>
@@ -178,7 +176,7 @@ function PlayerNavBar({
             <button
               type="button"
               className="btn btn-light"
-              onClick={toggleShowPlayer}
+              onClick={showPlayer}
               title="Play"
             >
               <Octicon icon={Play} />
@@ -193,23 +191,8 @@ function PlayerNavBar({
           title={title}
           show={showTrailer}
           onHide={toggleShowTrailer}
-        ></TrailerModal>
+        />
       )}
-
-      <PlayerModal
-        player={availablePlayer}
-        itemId={itemId}
-        imdbId={imdbId}
-        season={season}
-        episode={episode}
-        torrentUrl={
-          audioLanguage && resolution
-            ? torrents[audioLanguage][resolution].url
-            : ""
-        }
-        show={showPlayer}
-        onHide={toggleShowPlayer}
-      ></PlayerModal>
     </>
   );
 }

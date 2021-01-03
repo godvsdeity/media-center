@@ -4,11 +4,10 @@ import axios from "axios";
 import srt2vtt from "srt-to-vtt";
 import memoize from "memoizee";
 
-import { streamTorrentsRepository } from "../../repository";
-import { Controller, Get } from "../../service";
-import { torrentContainer } from "../../singleton";
+import { Controller, Get } from "../service";
+import { torrentContainer } from "../singleton";
 
-@Controller("/sub")
+@Controller("/torrents")
 export class Subtitles {
   protected openSubtitles: OS;
   protected openSubtitlesSearch: Function;
@@ -29,18 +28,14 @@ export class Subtitles {
     );
   }
 
-  @Get("/:torrentKey/:fileId")
+  @Get("/:infoHash/:fileId/sub")
   async listSubtitles(ctx: Koa.ParameterizedContext): Promise<void> {
-    const { torrentKey, fileId } = ctx.params;
+    const { infoHash, fileId } = ctx.params;
     const { lang, imdbid, season, episode, srt } = ctx.query;
-    const streamTorrent = streamTorrentsRepository.get(torrentKey);
-    if (!streamTorrent) {
-      ctx.status = 404;
-      ctx.body = `No torrent with id "${torrentKey}"`;
-      return;
-    }
-    const torrent = torrentContainer.getTorrent(streamTorrent.infoHash);
+    const torrent = torrentContainer.getTorrent(infoHash);
     if (!torrent || !torrent.files[fileId]) {
+      ctx.status = 404;
+      ctx.body = `No torrent with id "${infoHash}"`;
       return;
     }
 

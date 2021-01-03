@@ -4,61 +4,51 @@ import Modal from "react-bootstrap/Modal";
 import ResponsiveEmbed from "react-bootstrap/ResponsiveEmbed";
 import Octicon, { Clippy } from "@primer/octicons-react";
 import * as uuid from "uuid";
+import { useRecoilState, useRecoilValue } from "recoil";
 
 import { API_HOST } from "../../constants";
 import { defaultLang } from "../../helper";
 import TorrentStats from "./TorrentStats";
 import VideoTracks from "./VideoTracks";
-import { AvailablePlayer } from "../../interface";
 import playerIo from "../../service/playerIo";
-
-interface PlayerModalProps {
-  player: AvailablePlayer;
-  itemId: string;
-  imdbId?: string;
-  season?: number;
-  episode?: number;
-  torrentUrl: string;
-  show: boolean;
-  onHide: () => void;
-}
-
-interface StreamData {
-  infoHash: string;
-  fileName: string;
-  fileType: string;
-  streamUrl: string;
-  subUrl: string;
-}
+import { StreamDataDTO } from "../../dto";
+import {
+  playerModalState,
+  playerTorrentDataState,
+  selectedPlayerQuery,
+} from "../../atom";
+import { StreamData } from "../../interface";
 
 const supportedFileTypes = ["video/mp4", "video/webm", "video/ogg"];
 
-function PlayerModal({
-  player,
-  itemId,
-  imdbId,
-  season,
-  episode,
-  torrentUrl,
-  onHide,
-  show,
-}: PlayerModalProps) {
+function PlayerModal() {
+  const player = useRecoilValue(selectedPlayerQuery);
+  const [showPlayer, setShowPlayer] = useRecoilState(playerModalState);
+  const {
+    itemId,
+    imdbId,
+    season,
+    episode,
+    torrentUrl,
+    infoHash,
+  } = useRecoilValue(playerTorrentDataState);
+
   const [streamData, setStreamData] = React.useState<StreamData | null>(null);
   const [showSpinner, setShowSpinner] = React.useState(true);
   const [canPlayVideo, setCanPlayVideo] = React.useState(false);
   const [isPlaying, setIsPlaying] = React.useState(false);
   const streamUrlRef = React.useRef<HTMLInputElement | null>(null);
 
-  const isBrowserPlayer = player.ref === "browser";
+  const isBrowserPlayer = player.type === "browser";
 
   const playerId = React.useMemo(() => {
     return `${itemId}-${uuid.v4()}`;
   }, [itemId]);
 
-  const onPlaying = React.useCallback((data: any) => setIsPlaying(true), []);
+  const onPlaying = React.useCallback(() => setIsPlaying(true), []);
 
   const onLoaded = React.useCallback(
-    (data: any) => {
+    (data: StreamDataDTO) => {
       if (data.playerId !== playerId) {
         return;
       }
@@ -73,7 +63,7 @@ function PlayerModal({
       if (episode) {
         subUrl += `&episode=${episode}`;
       }
-      if (player.ref !== "browser") {
+      if (player.type !== "browser") {
         subUrl += `&lang=${defaultLang}&srt=true`;
       }
       const streamData = {
@@ -99,7 +89,7 @@ function PlayerModal({
   );
 
   React.useEffect(() => {
-    if (!show) {
+    if (!showPlayer || !itemId) {
       return;
     }
 
@@ -107,6 +97,7 @@ function PlayerModal({
     playerIo.emit("load", {
       playerId,
       torrentUrl,
+      infoHash,
     });
 
     return () => {
@@ -116,12 +107,26 @@ function PlayerModal({
 
       playerIo.emit("stop", { playerId, player });
     };
-  }, [show, onLoaded, playerId, torrentUrl, onPlaying, player]);
+  }, [
+    showPlayer,
+    onLoaded,
+    playerId,
+    itemId,
+    torrentUrl,
+    infoHash,
+    onPlaying,
+    player,
+  ]);
 
   return (
-    <Modal size="xl" show={show} onHide={onHide} animation={false}>
+    <Modal
+      size="xl"
+      show={showPlayer}
+      onHide={React.useCallback(() => setShowPlayer(false), [setShowPlayer])}
+      animation={false}
+    >
       <Modal.Body className="bg-dark">
-        <TorrentStats playerId={streamData && streamData.infoHash} />
+        <TorrentStats infoHash={streamData && streamData.infoHash} />
         <ResponsiveEmbed aspectRatio="16by9">
           <>
             {showSpinner && (

@@ -4,8 +4,6 @@ import fs from "fs";
 import path from "path";
 import ParseTorrent from "parse-torrent";
 import MagnetUri from "magnet-uri";
-import { streamTorrentsRepository } from "../../repository";
-import { generateInfoHashId } from "../../helper";
 
 const defaultTorrentsDownloadDir = process.env.MEDIA_CENTER_DATA_DIR
   ? path.join(process.env.MEDIA_CENTER_DATA_DIR, "torrents")
@@ -53,18 +51,6 @@ export class TorrentContainer {
     });
     torrent.once("ready", () => {
       torrent.deselect(0, torrent.pieces.length - 1, 0);
-
-      streamTorrentsRepository.set(generateInfoHashId(torrent.infoHash), {
-        infoHash: torrent.infoHash,
-        name: torrent.name,
-        path: torrent.path,
-        files: torrent.files.map((file, index) => ({
-          id: index,
-          path: file.path,
-          name: file.name,
-          size: file.length,
-        })),
-      });
 
       fs.writeFileSync(
         path.join(
