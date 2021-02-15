@@ -1,11 +1,36 @@
 import Koa from "koa";
 import rangeParser from "range-parser";
+import ParseTorrent from "parse-torrent";
+import MagnetUri = require("magnet-uri");
 
 import { Controller, Get } from "../service";
 import { torrentContainer } from "../singleton";
 
 @Controller("/torrents")
 export class Torrents {
+  @Get("/add")
+  addTorrent(ctx: Koa.ParameterizedContext): any {
+    let magnetUri: MagnetUri.Instance;
+    try {
+      magnetUri = ParseTorrent(ctx.query.torrent);
+    } catch (error) {
+      ctx.status = 400;
+      ctx.body = `Invalid torrent URL.`;
+      return;
+    }
+
+    const torrent = torrentContainer.addTorrent(magnetUri);
+    torrent.once("noPeers", (announceType) => {
+      // TODO: emit error :?
+    });
+    torrent.once("error", (error) => {
+      // TODO: emit error
+      console.error(error);
+    });
+
+    return "added";
+  }
+
   @Get("/")
   listTorrents(): any {
     return [...torrentContainer.getTorrents()].reverse().map((torrent) => ({

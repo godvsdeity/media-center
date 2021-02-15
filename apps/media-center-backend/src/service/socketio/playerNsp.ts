@@ -72,7 +72,6 @@ function onLoad(socket: socketio.Socket, activePlayers: ActivePlayers) {
           // TODO: emit error
           return;
         }
-        activePlayers.set(playerId, true);
 
         torrent = torrentContainer.getTorrent(magnetUri.infoHash);
         if (!torrent) {
@@ -87,6 +86,7 @@ function onLoad(socket: socketio.Socket, activePlayers: ActivePlayers) {
         }
       }
 
+      activePlayers.set(playerId, true);
       if (!torrent.ready) {
         torrent.once("ready", () => {
           if (!activePlayers.has(playerId)) {

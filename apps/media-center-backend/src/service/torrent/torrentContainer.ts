@@ -37,6 +37,8 @@ export class TorrentContainer {
         // silent
       }
     });
+
+    torrentClient.on("error", (e) => console.log(e));
   }
 
   public addTorrent(magnetUri: MagnetUri.Instance): WebTorrent.Torrent {
